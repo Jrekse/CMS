@@ -2,6 +2,7 @@ const sql = require('mysql');
 const inquirer = require('inquirer');
 const CMSTITLE = require('./nameplate.js');
 const Employee = require("./employeeModels.js");
+const table = require('console.table');
 
 
 init()
@@ -236,10 +237,10 @@ function end(){
   console.log('\n\nThis app will close soon.\n\n')
 }
 
-// sql.createConnection((err) => {
-//   if (err) throw err;
-//   // run the start function after the connection is made to prompt the user
-//   init();
-// });
+sql.createConnection((err) => {
+  if (err) throw err;
+  // run the start function after the connection is made to prompt the user
+  init();
+});
 
 
