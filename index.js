@@ -2,7 +2,6 @@ const sql = require('mysql');
 const inquirer = require('inquirer');
 const CMSTITLE = require('./nameplate.js');
 const Employee = require("./employeeModels.js");
-const table = require('console.table');
 
 
 init()
@@ -63,7 +62,7 @@ function allEmployees() {
       if (err) throw err;
       console.table(res);
       init();
-    })
+     })
 }
 
 function viewDept() {
@@ -146,6 +145,48 @@ const addEmp = async () => {
 
 }
 
+const updateEmpRole = async() => {
+  console.log('UPDATE ROLES')
+  let employeeQu = await employeeQ();
+  let roleQu = await roleQ();
+  inquire.prompt([
+    {
+      name: 'employeeUpdate',
+      type: 'rawlist',
+      choices: employeeQu,
+      message: 'Which employee you would you like to update?',
+    },
+    {
+      name: 'roleAdd',
+      type: 'rawlist',
+      choices: roleQu,
+      message: 'Please select a new role for the employee.',
+    }
+  ]).then((answer) => {
+      nameArr = answer.employeeUpdate.split(" ")
+      roleArr = answer.roleAdd.split(" ")
+      console.log('Updating employee role...\n');
+      connection.query('UPDATE Employee SET ? WHERE ?',
+        [
+          {
+            role_id: roleArr[2]
+          },
+          {
+            id: nameArr[1]
+          }
+        ],
+      (err, res) => {
+        if (err) {
+          console.log('Employee not in database!')
+          init();
+        };
+        console.log(`Employee role updated!\n`);
+        init();
+      }
+    )
+  })
+}
+
 const roleQ = () => {
   return new Promise((resolve, reject) => {
       connection.query('SELECT CONCAT("Role ID: ", id, " - ", title) AS fullRole FROM Role', (err, res) => {
@@ -159,9 +200,25 @@ const roleQ = () => {
   })
 };
 
+const employeeQ = () => {
+  return new Promise((resolve, reject) => {
+      connection.query(`SELECT CONCAT("ID: ", Employee.id, " - ", first_name, " ", last_name, " - ", Role.name) 
+      AS fullName FROM role RIGHT JOIN Employee ON Role.id = Employee.role_id`,
+          (err, res) => {
+              if (err) reject(err);
+              let employeeArray = [];
+              res.forEach(Employee => {
+                  employeeArray.push(Employee.fullName);
+              })
+              resolve(employeeArray)
+          });
+  })
+
+};
+
 const managerQ = () => {
   return new Promise((resolve, reject) => {
-      connection.query(`SELECT CONCAT("Emp_ID: ", id, " - ", first_name, " ", last_name) AS Managers FROM employee WHERE role_id BETWEEN 1 AND 2`, (err, res) => {
+      connection.query(`SELECT CONCAT("Emp_ID: ", id, " - ", first_name, " ", last_name) AS Managers FROM Employee WHERE role_id BETWEEN 1 AND 2`, (err, res) => {
           if (err) reject(err);
 
           let managerArray = ["No_Manager"];
@@ -173,9 +230,7 @@ const managerQ = () => {
   })
 }
 
-function updateEmpRole() {
-  console.log('UPDATE ROLES')
-}
+
 
 function end(){
   console.log('\n\nThis app will close soon.\n\n')
