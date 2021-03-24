@@ -68,14 +68,109 @@ function allEmployees() {
 
 function viewDept() {
   console.log('VIEW BY DEPARTMENT')
+  connection.query(`
+  SELECT Department.id AS ID, 
+  Department.name AS Dept FROM Department`, 
+  (err, res) => {
+    if (err) throw err;
+    console.table(res);
+    init();
+});
 }
 
 function viewEmpRole() {
   console.log('EMPLOYEE ROLES')
+  connection.query(
+    `SELECT 
+    Role.id AS RID,
+    Role.name AS Name, 
+    Role.salary AS Salary, 
+    department_id AS DID, 
+    department_name AS Department 
+    FROM Role INNER JOIN Department 
+    ON (Role.department_id = Department.id)`,
+    (err, res) => {
+        if (err) throw err;
+        console.table(res);
+        init();
+    });
 }
 
-function addEmp() {
+const addEmp = async () => {
   console.log('ADD AN EMPLOYEE')
+  let manager = await managerQ();
+  let role = await roleQ();
+  inquirer.prompt([
+            {
+                name: 'first_Name',
+                type: 'input',
+                message: "What is the employee's first name?"
+            },
+            {
+                name: 'last_Name',
+                type: 'input',
+                message: "What is the employee's last name?"
+            },
+            {
+                name: 'role',
+                type: 'list',
+                message: "What is the employee's role?",
+                choices: roleQ()
+            },
+            {
+                name: 'manager',
+                type: 'list',
+                message: 'Who is their manager?',
+                choices: managerQ()
+            }
+        ]).then((answer) => {
+            let roleArray = answer.role.split(" ");
+            let managerArray = answer.manager.split(" ");
+            connection.query(
+
+                'INSERT INTO Employee SET ?',
+                {
+                    first_name: answer.first_Name,
+                    last_name: answer.last_Name,
+                    manager_id: managerArray[1],
+                    role_id: roleArray[2],
+                },
+                (err, res) => {
+                    if (err) throw err;
+                    console.log(`\nEmployee added.\n`);
+                    init();
+                }
+            )
+
+        })
+
+}
+
+const roleQ = () => {
+  return new Promise((resolve, reject) => {
+      connection.query('SELECT CONCAT("Role ID: ", id, " - ", title) AS fullRole FROM Role', (err, res) => {
+          if (err) reject(err);
+          let roleArray = [];
+          res.forEach(Role => {
+              roleArray.push(Role.fullRole);
+          })
+          resolve(roleArray);
+      });
+  })
+};
+
+const managerQ = () => {
+  return new Promise((resolve, reject) => {
+      connection.query(`SELECT CONCAT("Emp_ID: ", id, " - ", first_name, " ", last_name) AS Managers FROM employee WHERE role_id BETWEEN 1 AND 2`, (err, res) => {
+          if (err) reject(err);
+
+          let managerArray = ["No_Manager"];
+          res.forEach(manager => {
+              managerArray.push(manager.Managers);
+          })
+          resolve(managerArray);
+      })
+  })
 }
 
 function updateEmpRole() {
@@ -86,7 +181,7 @@ function end(){
   console.log('\n\nThis app will close soon.\n\n')
 }
 
-// sql.connect((err) => {
+// sql.createConnection((err) => {
 //   if (err) throw err;
 //   // run the start function after the connection is made to prompt the user
 //   init();
