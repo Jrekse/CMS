@@ -1,10 +1,8 @@
 const sql = require('mysql');
 const inquirer = require('inquirer');
 const CMSTITLE = require('./nameplate.js');
-const Employee = require("./employeeModels.js");
-const table = require('console.table');
 
-init()
+init();
 
 const connection = sql.createConnection({
     host: 'localhost',
@@ -47,7 +45,7 @@ function init(){
 
 function allEmployees() {
   console.log('ALL EMPLOYEES:')
-  const connect = connection.query(`
+  return this.connection.query(`
     SELECT Employee.id as ID,
     Employee.first_name as first_name,
     Employee.last_name as last_name,
@@ -58,7 +56,7 @@ function allEmployees() {
     ON (Employee.role_id = Role.id) 
     INNER JOIN Department ON Role.department_id = Department.id`)
   
-    console.table(connect)
+    console.table()
     init();
      
 }
