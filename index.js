@@ -4,7 +4,6 @@ const CMSTITLE = require('./nameplate.js');
 const Employee = require("./employeeModels.js");
 const table = require('console.table');
 
-
 init()
 
 const connection = sql.createConnection({
@@ -14,7 +13,6 @@ const connection = sql.createConnection({
     password: 'password',
     database: 'cms_DB',
   });
-
 
 function init(){
   console.log(CMSTITLE)
@@ -49,57 +47,52 @@ function init(){
 
 function allEmployees() {
   console.log('ALL EMPLOYEES:')
-  connection.query(`
+  const connect = connection.query(`
     SELECT Employee.id as ID,
-    Employee.first_name as Fname,
-    Employee.last_name as Lname,
+    Employee.first_name as first_name,
+    Employee.last_name as last_name,
     Role.name as Role,
     Role.salary as Salary,
     Department.name as Dept,
-    FROM employee INNER JOIN role 
-    ON (employee.role_id = role.id) 
-    INNER JOIN department ON role.department_id = department.id`,
-    (err, res) => {
-      if (err) throw err;
-      console.table(res);
-      init();
-     })
+    FROM Employee INNER JOIN Role 
+    ON (Employee.role_id = Role.id) 
+    INNER JOIN Department ON Role.department_id = Department.id`)
+  
+    console.table(connect)
+    init();
+     
 }
 
 function viewDept() {
   console.log('VIEW BY DEPARTMENT')
-  connection.query(`
+  const connect = connection.query(`
   SELECT Department.id AS ID, 
-  Department.name AS Dept FROM Department`, 
-  (err, res) => {
-    if (err) throw err;
-    console.table(res);
+  Department.name AS Dept FROM Department`) 
+  
+    console.table(connect);
     init();
-});
+
 }
 
 function viewEmpRole() {
   console.log('EMPLOYEE ROLES')
-  connection.query(
+  const connect = connection.query(
     `SELECT 
     Role.id AS RID,
     Role.name AS Name, 
     Role.salary AS Salary, 
-    department_id AS DID, 
-    department_name AS Department 
+    Role.department_id AS DID, 
+    Department.name AS Department 
     FROM Role INNER JOIN Department 
-    ON (Role.department_id = Department.id)`,
-    (err, res) => {
-        if (err) throw err;
-        console.table(res);
-        init();
-    });
+    ON (Role.department_id = Department.id)`)
+    console.table(connect);
+    init();
 }
 
 const addEmp = async () => {
   console.log('ADD AN EMPLOYEE')
-  let manager = await managerQ();
-  let role = await roleQ();
+  let Manager = await managerQ();
+  let Role = await roleQ();
   inquirer.prompt([
             {
                 name: 'first_Name',
@@ -124,8 +117,8 @@ const addEmp = async () => {
                 choices: managerQ()
             }
         ]).then((answer) => {
-            let roleArray = answer.role.split(" ");
-            let managerArray = answer.manager.split(" ");
+            let roleArray = answer.Role.split(" ");
+            let managerArray = answer.Manager.split(" ");
             connection.query(
 
                 'INSERT INTO Employee SET ?',
@@ -190,7 +183,7 @@ const updateEmpRole = async() => {
 
 const roleQ = () => {
   return new Promise((resolve, reject) => {
-      connection.query('SELECT CONCAT("Role ID: ", id, " - ", title) AS fullRole FROM Role', (err, res) => {
+      connection.query('SELECT CONCAT("Role ID: ", id, ": ", title) AS fullRole FROM Role', (err, res) => {
           if (err) reject(err);
           let roleArray = [];
           res.forEach(Role => {
@@ -203,8 +196,8 @@ const roleQ = () => {
 
 const employeeQ = () => {
   return new Promise((resolve, reject) => {
-      connection.query(`SELECT CONCAT("ID: ", Employee.id, " - ", first_name, " ", last_name, " - ", Role.name) 
-      AS fullName FROM role RIGHT JOIN Employee ON Role.id = Employee.role_id`,
+      connection.query(`SELECT CONCAT("ID: ", Employee.id, ": ", first_name, " ", last_name, " - ", Role.name) 
+      AS fullName FROM Role RIGHT JOIN Employee ON Role.id = Employee.role_id`,
           (err, res) => {
               if (err) reject(err);
               let employeeArray = [];
@@ -219,12 +212,12 @@ const employeeQ = () => {
 
 const managerQ = () => {
   return new Promise((resolve, reject) => {
-      connection.query(`SELECT CONCAT("Emp_ID: ", id, " - ", first_name, " ", last_name) AS Managers FROM Employee WHERE role_id BETWEEN 1 AND 2`, (err, res) => {
+      connection.query(`SELECT CONCAT("Emp_ID: ", id, ": ", first_name, " ", last_name) AS Managers FROM Employee WHERE role_id BETWEEN 1 AND 2`, (err, res) => {
           if (err) reject(err);
 
           let managerArray = ["No_Manager"];
-          res.forEach(manager => {
-              managerArray.push(manager.Managers);
+          res.forEach(Manager => {
+              managerArray.push(Manager.Managers);
           })
           resolve(managerArray);
       })
@@ -236,11 +229,3 @@ const managerQ = () => {
 function end(){
   console.log('\n\nThis app will close soon.\n\n')
 }
-
-sql.createConnection((err) => {
-  if (err) throw err;
-  // run the start function after the connection is made to prompt the user
-  init();
-});
-
-
