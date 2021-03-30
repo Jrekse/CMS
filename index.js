@@ -4,7 +4,7 @@ const CMSTITLE = require('./nameplate.js');
 
 init();
 
-const connection = sql.createConnection({
+const connection = sql.createPool({
     host: 'localhost',
     port: 3001,
     user: 'root',
@@ -56,8 +56,8 @@ function allEmployees() {
     ON (Employee.role_id = Role.id) 
     INNER JOIN Department ON Role.department_id = Department.id`)
   
-    console.table()
-    init();
+  console.table()
+  init();
      
 }
 
